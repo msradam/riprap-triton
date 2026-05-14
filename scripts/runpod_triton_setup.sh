@@ -96,7 +96,7 @@ pkill -f "vllm.entrypoints.openai" 2>/dev/null || true
 mkdir -p /tmp/prometheus_multiproc
 export PROMETHEUS_MULTIPROC_DIR=/tmp/prometheus_multiproc
 
-nohup python -m vllm.entrypoints.openai.api_server \
+nohup python3 -m vllm.entrypoints.openai.api_server \
     --model ibm-granite/granite-4.1-8b-fp8 \
     --served-model-name granite4.1:8b \
     --host 127.0.0.1 \
