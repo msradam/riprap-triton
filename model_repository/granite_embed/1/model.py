@@ -16,15 +16,29 @@ class TritonPythonModel:
 
     def initialize(self, args):
         import torch
-        from sentence_transformers import SentenceTransformer
+        from transformers import AutoTokenizer, AutoModel
 
         self._device = "cuda" if torch.cuda.is_available() else "cpu"
-        self._model = SentenceTransformer(
-            "ibm-granite/granite-embedding-278m-multilingual",
-            device=self._device,
-            trust_remote_code=True,
-        )
+        model_name = "ibm-granite/granite-embedding-278m-multilingual"
+        self._tokenizer = AutoTokenizer.from_pretrained(model_name)
+        self._model = AutoModel.from_pretrained(model_name).to(self._device)
+        self._model.eval()
         pb_utils.Logger.log_info("granite_embed: ready")
+
+    def _encode(self, texts):
+        import torch
+        import torch.nn.functional as F
+        encoded = self._tokenizer(
+            texts, padding=True, truncation=True,
+            max_length=512, return_tensors="pt"
+        ).to(self._device)
+        with torch.no_grad():
+            out = self._model(**encoded)
+        # Mean pool over token dimension, then L2-normalise
+        mask = encoded["attention_mask"].unsqueeze(-1).float()
+        vecs = (out.last_hidden_state * mask).sum(1) / mask.sum(1).clamp(min=1e-9)
+        vecs = F.normalize(vecs, p=2, dim=1)
+        return vecs.cpu().numpy().astype(np.float32)
 
     def execute(self, requests):
         responses = []
@@ -33,10 +47,7 @@ class TritonPythonModel:
             raw = pb_utils.get_input_tensor_by_name(request, "texts").as_numpy()
             texts = [r.decode("utf-8") if isinstance(r, bytes) else r for r in raw.flatten()]
 
-            vecs = self._model.encode(
-                texts, normalize_embeddings=True, show_progress_bar=False
-            )
-            vecs = np.array(vecs, dtype=np.float32)
+            vecs = self._encode(texts)
 
             meta = json.dumps({
                 "ok": True,
