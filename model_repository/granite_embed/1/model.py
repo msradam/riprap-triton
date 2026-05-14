@@ -22,6 +22,7 @@ class TritonPythonModel:
         self._model = SentenceTransformer(
             "ibm-granite/granite-embedding-278m-multilingual",
             device=self._device,
+            trust_remote_code=True,
         )
         pb_utils.Logger.log_info("granite_embed: ready")
 

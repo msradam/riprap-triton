@@ -16,10 +16,13 @@ class TritonPythonModel:
 
     def initialize(self, args):
         import torch
-        # Newer transformers fetches additional_chat_templates and 404s on models
-        # that don't have that folder (e.g. deberta-v3-base used by GLiNER).
+        # Newer transformers (4.48+) fetches additional_chat_templates during tokenizer
+        # load and 404s on deberta-v3-base (used by GLiNER). Patch at the source module
+        # AND the direct-import copy in tokenization_utils_base.
         try:
             import transformers.utils.hub as _hub
+            import transformers.tokenization_utils_base as _tok_base
+
             _orig_lrt = getattr(_hub, "list_repo_templates", None)
             if _orig_lrt is not None:
                 def _safe_lrt(*a, **kw):
@@ -28,6 +31,8 @@ class TritonPythonModel:
                     except Exception:
                         return []
                 _hub.list_repo_templates = _safe_lrt
+                if hasattr(_tok_base, "list_repo_templates"):
+                    _tok_base.list_repo_templates = _safe_lrt
         except Exception:
             pass
         from gliner import GLiNER
