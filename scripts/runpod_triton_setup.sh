@@ -50,11 +50,13 @@ pip cache purge 2>/dev/null || true
 
 # --- [4] terratorch (EO stack, best-effort) ----------------------------------
 echo "==> [4/6] Install terratorch (EO stack)"
-# Pin blinker before terratorch to avoid distutils uninstall conflict
-pip install --quiet "blinker>=1.8" --ignore-installed 2>/dev/null || true
+# terratorch has conflicts with system packages (cryptography, blinker).
+# Install with --ignore-installed to skip uninstall of distutils packages.
+pip install --quiet "blinker>=1.8" "cryptography>=41" --ignore-installed 2>/dev/null || true
 pip install --quiet \
     "terratorch==1.1rc6" "diffusers" "timm" \
-    "segmentation-models-pytorch" "kornia" || \
+    "segmentation-models-pytorch" "kornia" \
+    --ignore-installed 2>/dev/null || \
     echo "    WARN: terratorch install failed — Prithvi/TerraMind will skip"
 pip cache purge 2>/dev/null || true
 df -h / | tail -1 | awk '{print "    disk after installs: "$3" used, "$4" free"}'
@@ -74,12 +76,8 @@ nohup "$TRITON_BIN" \
     --metrics-port=8003 \
     --log-verbose=0 \
     --log-info=1 \
-    --model-control-mode=explicit \
-    --load-model=granite_embed \
-    --load-model=gliner \
-    --load-model=ttm_forecast \
-    --load-model=prithvi_pluvial \
-    --load-model=terramind \
+    --model-control-mode=none \
+    --exit-on-error=false \
     > "$LOG_DIR/triton.log" 2>&1 &
 
 echo "    tritonserver pid $! — waiting up to 300s for readiness..."
