@@ -1,0 +1,25 @@
+# Proxy
+fastapi>=0.115
+uvicorn[standard]>=0.32
+httpx>=0.27
+pydantic>=2.9
+nvidia-ml-py>=12.560
+
+# Triton Python backends — installed into the container
+sentence-transformers>=5.0.0
+gliner>=0.2.6
+granite-tsfm==0.3.3
+peft==0.18.1
+huggingface_hub>=0.34
+safetensors>=0.4
+einops
+tifffile
+albumentations
+scipy
+
+# EO stack (best-effort; failures skip Prithvi/TerraMind)
+# terratorch==1.1rc6
+# diffusers
+# timm
+# segmentation-models-pytorch
+# kornia

@@ -1,0 +1,21 @@
+name: "terramind"
+backend: "python"
+max_batch_size: 0
+
+input [
+  {
+    name: "request"
+    data_type: TYPE_BYTES
+    dims: [ 1 ]
+  }
+]
+
+output [
+  {
+    name: "result"
+    data_type: TYPE_BYTES
+    dims: [ 1 ]
+  }
+]
+
+instance_group [{ kind: KIND_GPU, count: 1 }]
