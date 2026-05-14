@@ -62,11 +62,16 @@ class TritonPythonModel:
     _synth_timesteps = _SYNTH_TIMESTEPS
 
     def initialize(self, args):
+        import json
         import torch
         self._device = "cuda" if torch.cuda.is_available() else "cpu"
+        # model_config is a JSON string in Triton Python backend, not a dict.
+        try:
+            mc = json.loads(args.get("model_config", "{}"))
+        except Exception:
+            mc = {}
         self._synth_timesteps = int(
-            args.get("model_config", {})
-            .get("parameters", {})
+            mc.get("parameters", {})
             .get("SYNTH_TIMESTEPS", {})
             .get("string_value", str(_SYNTH_TIMESTEPS))
         )

@@ -16,6 +16,20 @@ class TritonPythonModel:
 
     def initialize(self, args):
         import torch
+        # Newer transformers fetches additional_chat_templates and 404s on models
+        # that don't have that folder (e.g. deberta-v3-base used by GLiNER).
+        try:
+            import transformers.utils.hub as _hub
+            _orig_lrt = getattr(_hub, "list_repo_templates", None)
+            if _orig_lrt is not None:
+                def _safe_lrt(*a, **kw):
+                    try:
+                        return _orig_lrt(*a, **kw)
+                    except Exception:
+                        return []
+                _hub.list_repo_templates = _safe_lrt
+        except Exception:
+            pass
         from gliner import GLiNER
 
         self._device = "cuda" if torch.cuda.is_available() else "cpu"

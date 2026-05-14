@@ -24,8 +24,3 @@ output [
 ]
 
 instance_group [{ kind: KIND_GPU, count: 1 }]
-
-parameters {
-  key: "EXECUTION_ENV_PATH"
-  value: { string_value: "/workspace/riprap_env.tar.gz" }
-}
