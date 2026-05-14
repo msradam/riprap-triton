@@ -44,9 +44,18 @@ pip install --quiet \
     "einops" "tifffile" "albumentations" "scipy"
 
 # --- [3] vLLM ----------------------------------------------------------------
-echo "==> [3/6] Install vLLM"
-pip install --quiet "vllm==0.7.3" "numpy<2.0"
-pip cache purge 2>/dev/null || true
+# The Triton 25.05 container ships torch 2.12.0+cu130 (NVIDIA nightly).
+# vLLM must be installed in an isolated venv with its own torch 2.5.1 so
+# its pre-built CUDA extension is ABI-compatible.
+echo "==> [3/6] Install vLLM (isolated venv with torch 2.5.1)"
+VLLM_VENV="/workspace/vllm_env"
+if [ ! -f "$VLLM_VENV/bin/activate" ]; then
+    python3 -m venv "$VLLM_VENV"
+fi
+"$VLLM_VENV/bin/pip" install --quiet torch==2.5.1 \
+    --index-url https://download.pytorch.org/whl/cu124
+"$VLLM_VENV/bin/pip" install --quiet "vllm==0.7.3" "numpy<2.0"
+"$VLLM_VENV/bin/pip" cache purge 2>/dev/null || true
 
 # --- [4] terratorch (EO stack, best-effort) ----------------------------------
 echo "==> [4/6] Install terratorch (EO stack)"
@@ -96,7 +105,7 @@ pkill -f "vllm.entrypoints.openai" 2>/dev/null || true
 mkdir -p /tmp/prometheus_multiproc
 export PROMETHEUS_MULTIPROC_DIR=/tmp/prometheus_multiproc
 
-nohup python3 -m vllm.entrypoints.openai.api_server \
+nohup "$VLLM_VENV/bin/python3" -m vllm.entrypoints.openai.api_server \
     --model ibm-granite/granite-4.1-8b-fp8 \
     --served-model-name granite4.1:8b \
     --host 127.0.0.1 \
