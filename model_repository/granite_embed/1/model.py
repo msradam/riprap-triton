@@ -16,6 +16,23 @@ class TritonPythonModel:
 
     def initialize(self, args):
         import torch
+        # Newer transformers (4.48+) fetches additional_chat_templates and 404s
+        # on Granite embedding which has no additional_chat_templates folder.
+        try:
+            import transformers.utils.hub as _hub
+            import transformers.tokenization_utils_base as _tok_base
+            _orig_lrt = getattr(_hub, "list_repo_templates", None)
+            if _orig_lrt is not None:
+                def _safe_lrt(*a, **kw):
+                    try:
+                        return _orig_lrt(*a, **kw)
+                    except Exception:
+                        return []
+                _hub.list_repo_templates = _safe_lrt
+                if hasattr(_tok_base, "list_repo_templates"):
+                    _tok_base.list_repo_templates = _safe_lrt
+        except Exception:
+            pass
         from transformers import AutoTokenizer, AutoModel
 
         self._device = "cuda" if torch.cuda.is_available() else "cpu"
