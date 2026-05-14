@@ -46,13 +46,18 @@ pip install --quiet \
 # --- [3] vLLM ----------------------------------------------------------------
 echo "==> [3/6] Install vLLM"
 pip install --quiet "vllm==0.7.3" "numpy<2.0"
+pip cache purge 2>/dev/null || true
 
 # --- [4] terratorch (EO stack, best-effort) ----------------------------------
 echo "==> [4/6] Install terratorch (EO stack)"
+# Pin blinker before terratorch to avoid distutils uninstall conflict
+pip install --quiet "blinker>=1.8" --ignore-installed 2>/dev/null || true
 pip install --quiet \
     "terratorch==1.1rc6" "diffusers" "timm" \
     "segmentation-models-pytorch" "kornia" || \
     echo "    WARN: terratorch install failed — Prithvi/TerraMind will skip"
+pip cache purge 2>/dev/null || true
+df -h / | tail -1 | awk '{print "    disk after installs: "$3" used, "$4" free"}'
 
 # --- [5] Start tritonserver --------------------------------------------------
 echo "==> [5/6] Start tritonserver on :8001"
