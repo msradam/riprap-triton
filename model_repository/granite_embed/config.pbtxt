@@ -5,7 +5,7 @@ max_batch_size: 32
 input [
   {
     name: "texts"
-    data_type: TYPE_BYTES
+    data_type: TYPE_STRING
     dims: [ -1 ]
   }
 ]
@@ -18,7 +18,7 @@ output [
   },
   {
     name: "meta"
-    data_type: TYPE_BYTES
+    data_type: TYPE_STRING
     dims: [ 1 ]
   }
 ]
